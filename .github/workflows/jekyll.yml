@@ -34,13 +34,20 @@ jobs:
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
+        if: github.event_name != 'pull_request'
         with:
           enablement: true
 
-      - name: Build site
+      - name: Build site (PR validation)
+        if: github.event_name == 'pull_request'
+        run: bundle exec jekyll build
+
+      - name: Build site (Pages)
+        if: github.event_name != 'pull_request'
         run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
 
       - name: Upload artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./_site
