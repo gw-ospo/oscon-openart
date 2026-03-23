@@ -1,10 +1,9 @@
-name: Build and Deploy Jekyll Site
+name: Deploy Jekyll Site to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -13,14 +12,12 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: "pages"
   cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      JEKYLL_ENV: production
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,30 +27,21 @@ jobs:
         with:
           ruby-version: "3.3"
           bundler-cache: true
+          cache-version: 0
 
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
-        if: github.event_name != 'pull_request'
-        with:
-          enablement: true
 
-      - name: Build site (PR validation)
-        if: github.event_name == 'pull_request'
-        run: bundle exec jekyll build
-
-      - name: Build site (Pages)
-        if: github.event_name != 'pull_request'
+      - name: Build with Jekyll
         run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
+        env:
+          JEKYLL_ENV: production
 
       - name: Upload artifact
-        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./_site
 
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
